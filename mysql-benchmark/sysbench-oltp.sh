@@ -45,13 +45,16 @@ WARMUP=300
 DURING=900
 ROWS=20000000
 MAXREQ=20000000
+
+# 并发压测的线程数，根据机器配置实际情况进行调整
 RUN_NUMBER="8 64 128 256 512 768 1024 1664 2048 4096"
 
 ## prepare data
 ## sysbench --mysql-host=x --mysql-port=x --mysql-user=x --mysql-password=x --mysql-db=x --oltp_tables_count=50 \
 ## --oltp-table-size=20000000 prepare
+
 round=1
-# 一般跑3轮测试
+# 一般至少跑3轮测试，我正常都会跑10轮以上
 while [ $round -lt 4 ]
 do
 
