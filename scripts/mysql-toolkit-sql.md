@@ -1,3 +1,11 @@
+## 关于
+> 作者：叶金荣, 知数堂培训（http:/zhishutang.com）联合创始人, 资深MySQL专家, MySQL布道师, Oracle MySQL ACE。
+> 分享工作、教学中用到的&收集到的一些实用SQL脚本命令，有需自取。
+> 这些脚本在MySQL 5.7版本下均测试通过。
+> 最后更新时间：2017-6-22。
+> QQ群：579036588
+> 微信公众号：「老叶茶馆」、「知数堂」、「云DB」
+
 * ## 查看哪些索引长度超过30字节，重点查CHAR/VARCHAR/TEXT/BLOB等类型
 > 优化建议：超过20字节长度的索引，都应该考虑进一步缩短，否则效率不佳
 ```
@@ -42,8 +50,8 @@ select b.host, b.user, b.db, b.time, b.COMMAND,
 > - [MySQL FAQ系列 — 为什么InnoDB表要建议用自增列做主键 http://mp.weixin.qq.com/s/GpOzU9AqhWPj6bj9C5yXmw]
 ```
 SELECT
-a.TABLE_SCHEMA,
-a.TABLE_NAME
+a.TABLE_SCHEMA as `db`,
+a.TABLE_NAME as `tbl`
 FROM
 (
 SELECT
@@ -72,11 +80,19 @@ WHERE
 b.TABLE_NAME IS NULL;
 ```
 
+* ## 查InnoDB表碎片率
+```
+SELECT TABLE_SCHEMA as `db`, TABLE_NAME as `tbl`, 
+1-(TABLE_ROWS*AVG_ROW_LENGTH)/(DATA_LENGTH + INDEX_LENGTH + DATA_FREE) AS `fragment_pct` 
+FROM TABLES WHERE 
+TABLE_SCHEMA = 'yejr' ORDER BY fragment_pct DESC;
+```
+
 
 * ## 查某个表在innodb buffer pool中的new block、old block比例
 ```
 select table_name, count(*), sum(NUMBER_RECORDS), 
  if(IS_OLD='YES', 'old', 'new') as old_block from
  information_schema.innodb_buffer_page where 
- table_name = '`test`.`ts1`' group by old_block;
+ table_name = '`yejr`.`t1`' group by old_block;
 ```
