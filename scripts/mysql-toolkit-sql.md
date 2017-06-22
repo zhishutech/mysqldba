@@ -1,10 +1,11 @@
 ## 关于
-> 作者：叶金荣, 知数堂培训（http:/zhishutang.com）联合创始人, 资深MySQL专家, MySQL布道师, Oracle MySQL ACE。
-> 分享工作、教学中用到的&收集到的一些实用SQL脚本命令，有需自取。
-> 这些脚本在MySQL 5.7版本下均测试通过。
-> 最后更新时间：2017-6-22。
-> QQ群：579036588
-> 微信公众号：「老叶茶馆」、「知数堂」、「云DB」
+
+> - 作者：叶金荣, 知数堂培训（http:/zhishutang.com）联合创始人, 资深MySQL专家, MySQL布道师, Oracle MySQL ACE
+> - 分享工作、教学中用到的&收集到的一些实用SQL脚本命令，有需自取
+> - 这些脚本在MySQL 5.7版本下均测试通过
+> - 最后更新时间：2017-6-22
+> - QQ群：579036588
+> - 微信公众号：「老叶茶馆」、「知数堂」、「云DB」
 
 * ## 查看哪些索引长度超过30字节，重点查CHAR/VARCHAR/TEXT/BLOB等类型
 > 优化建议：超过20字节长度的索引，都应该考虑进一步缩短，否则效率不佳
@@ -80,11 +81,21 @@ WHERE
 b.TABLE_NAME IS NULL;
 ```
 
-* ## 查InnoDB表碎片率
+
+* ## 查看表数据列元数据信息
+```
+select a.table_id, a.name, b.name, b.pos, b.mtype, b.prtype, b.len from 
+information_schema.INNODB_SYS_TABLES a left join 
+information_schema.INNODB_SYS_COLUMNS b 
+using(table_id) where a.name = 'yejr/t1';
+```
+
+
+* ## 查看InnoDB表碎片率
 ```
 SELECT TABLE_SCHEMA as `db`, TABLE_NAME as `tbl`, 
 1-(TABLE_ROWS*AVG_ROW_LENGTH)/(DATA_LENGTH + INDEX_LENGTH + DATA_FREE) AS `fragment_pct` 
-FROM TABLES WHERE 
+FROM information_schema.TABLES WHERE 
 TABLE_SCHEMA = 'yejr' ORDER BY fragment_pct DESC;
 ```
 
