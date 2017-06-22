@@ -1,4 +1,5 @@
 * ## 查看哪些索引长度超过30字节，重点查CHAR/VARCHAR/TEXT/BLOB等类型
+> 优化建议：超过20字节长度的索引，都应该考虑进一步缩短，否则效率不佳
 ```
 select c.table_schema as `db`, c.table_name as `tbl`, 
  c.COLUMN_NAME as `col`, c.DATA_TYPE as `col_type`, 
@@ -14,6 +15,17 @@ select c.table_schema as `db`, c.table_name as `tbl`,
  SUB_PART * CHARACTER_OCTET_LENGTH/CHARACTER_MAXIMUM_LENGTH >20);
 ```
 
+* ## 查看未完成的事务列表
+> 优化建议：若有长时间未完成的事务，可能会导致：
+> - undo不能被及时purge，undu表空间不断增长；
+> - 持有行锁，其他事务被阻塞。
+> 应该及时提交或回滚这些事务，或者直接kill释放之。
+```
+select b.host, b.user, b.db, b.time, b.COMMAND, 
+ a.trx_id, a. trx_state from 
+ information_schema.innodb_trx a left join 
+ information_schema.PROCESSLIST b on a.trx_mysql_thread_id = b.id;
+```
 
 * ## 查某个表在innodb buffer pool中的new block、old block比例
 ```
