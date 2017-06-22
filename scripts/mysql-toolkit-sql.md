@@ -92,6 +92,7 @@ using(table_id) where a.name = 'yejr/t1';
 
 
 * ## 查看InnoDB表碎片率
+> 优化建议：
 ```
 SELECT TABLE_SCHEMA as `db`, TABLE_NAME as `tbl`, 
 1-(TABLE_ROWS*AVG_ROW_LENGTH)/(DATA_LENGTH + INDEX_LENGTH + DATA_FREE) AS `fragment_pct` 
