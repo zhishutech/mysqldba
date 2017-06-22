@@ -22,8 +22,8 @@ select c.table_schema as `db`, c.table_name as `tbl`,
 > 应该及时提交或回滚这些事务，或者直接kill释放之。
 >
 > 参考：
-> - FAQ系列 | 如何避免ibdata1文件大小暴涨
-> - 是谁，把InnoDB表上的DML搞慢的？
+> - [FAQ系列 | 如何避免ibdata1文件大小暴涨 http://mp.weixin.qq.com/s/KD2qLrmWY80yFxUtxJVNMA]
+> - [是谁，把InnoDB表上的DML搞慢的？ http://mp.weixin.qq.com/s/wEPKgPo1dMsxTedjvulSlQ]
 ```
 select b.host, b.user, b.db, b.time, b.COMMAND, 
  a.trx_id, a. trx_state from 
@@ -39,7 +39,7 @@ select b.host, b.user, b.db, b.time, b.COMMAND,
 > - 主键最好不要有业务用途，避免后续会更新。
 >
 > 参考：
-> - [MySQL FAQ]系列 — 为什么InnoDB表要建议用自增列做主键
+> - [MySQL FAQ系列 — 为什么InnoDB表要建议用自增列做主键 http://mp.weixin.qq.com/s/GpOzU9AqhWPj6bj9C5yXmw]
 ```
 SELECT
 a.TABLE_SCHEMA,
