@@ -41,6 +41,38 @@ select b.host, b.user, b.db, b.time, b.COMMAND,
 ```
 
 
+* ## 查看当前有无行锁等待事件
+> 优化建议：
+> - 若当前有行锁等待，则有可能导致锁超时被回滚，事务失败；
+> - 有时候，可能是因为某个终端/会话开启事务，对数据加锁后，忘记提交/回滚，导致行锁不能释放。
+> 
+> 参考：
+> [是谁，把InnoDB表上的DML搞慢的？ http://mp.weixin.qq.com/s/wEPKgPo1dMsxTedjvulSlQ]
+> [FAQ系列 | 是什么导致MySQL数据库服务器磁盘I/O高？ http://mp.weixin.qq.com/s/sAGFo-h1GCBhad1r1cEWTg]
+> [[译文]MySQL发生死锁肿么办？ http://mp.weixin.qq.com/s/oUSdfv0qlrxCearFw-_XZw]
+> [都是主键惹的祸-记一次死锁分析过程 http://mp.weixin.qq.com/s/7VmlqcqTQH7ITnmUKCdw5Q]
+```
+SELECT lw.requesting_trx_id AS request_XID, 
+ trx.trx_mysql_thread_id as request_mysql_PID,
+ trx.trx_query AS request_query, 
+ lw.blocking_trx_id AS blocking_XID, 
+ trx1.trx_mysql_thread_id as blocking_mysql_PID,
+ trx1.trx_query AS blocking_query, lo.lock_index AS lock_index FROM 
+ information_schema.innodb_lock_waits lw INNER JOIN 
+ information_schema.innodb_locks lo 
+ ON lw.requesting_trx_id = lo.lock_trx_id INNER JOIN 
+ information_schema.innodb_locks lo1 
+ ON lw.blocking_trx_id = lo1.lock_trx_id INNER JOIN 
+ information_schema.innodb_trx trx 
+ ON lo.lock_trx_id = trx.trx_id INNER JOIN 
+ information_schema.innodb_trx trx1 
+ ON lo1.lock_trx_id = trx1.trx_id;
+```
+其实，在MySQL 5.7下，也可以直接查看 sys.innodb_lock_waits 视图：
+```
+SELECT * FROM sys.innodb_lock_waits\G
+```
+
 * ## 检查哪些表没有显式创建主键索引
 > 优化建议：
 > - 选择自增列做主键；
@@ -59,13 +91,15 @@ SELECT
 TABLE_SCHEMA,
 TABLE_NAME
 FROM
-information_schema. TABLES
+information_schema.TABLES
 WHERE
 TABLE_SCHEMA NOT IN (
 'mysql',
+'sys',
 'information_schema',
 'performance_schema'
-)
+) AND 
+TABLE_TYPE = 'BASE TABLE'
 ) AS a
 LEFT JOIN (
 SELECT
