@@ -205,7 +205,7 @@ EXPLAIN SELECT * FROM t1 LEFT JOIN
 	t1.id >= 5000\G
 ```
 
-参考
+**参考**
 
 - [UTF8字符集的表怎么直接转UTF8MB4？](http://mp.weixin.qq.com/s?__biz=MjM5NzAzMTY4NQ==&mid=2653930515&idx=1&sn=edc341d36f076e379ea71903e31762a0&chksm=bd3b5e798a4cd76fd63e7f6c9f47eaca47cf66761c6c24479d170a16b1934f139278896658e5&scene=21#wechat_redirect)
 - [细说ANALYZE TABLE](http://mp.weixin.qq.com/s?__biz=MjM5NzAzMTY4NQ==&mid=2653930467&idx=1&sn=2511653a476245e96389655fd670671e&chksm=bd3b59898a4cd09f2e2823d75f9d0f3acd76442b547bede0178130bc202f79927c1ac1b6dde3&scene=21#wechat_redirect)
