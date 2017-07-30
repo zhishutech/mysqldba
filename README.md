@@ -1,5 +1,5 @@
 # mysqldba
-MySQL DBA用得到的东西
+> MySQL DBA用得到的东西集锦
 
 ## mysql-benchmark
 > MySQL压测脚本，sybench和tpcc-mysql
