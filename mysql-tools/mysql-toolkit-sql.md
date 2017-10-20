@@ -7,6 +7,15 @@
 > - QQ群：579036588
 > - 微信公众号：「老叶茶馆」、「知数堂」、「云DB」
 
+* ## 查看哪些索引采用部分索引（前缀索引）
+> 优化建议：检查部分索引长度是否还可以进一步缩小
+```
+SELECT TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, 
+SEQ_IN_INDEX, COLUMN_NAME, CARDINALITY, SUB_PART
+FROM INFORMATION_SCHEMA.STATISTICS WHERE 
+SUB_PART > 10 ORDER BY SUB_PART DESC;
+```
+
 * ## 查看哪些索引长度超过30字节，重点查CHAR/VARCHAR/TEXT/BLOB等类型
 > 优化建议：超过20字节长度的索引，都应该考虑进一步缩短，否则效率不佳
 ```
