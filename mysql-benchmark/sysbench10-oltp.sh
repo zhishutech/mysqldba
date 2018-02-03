@@ -71,7 +71,7 @@ do
 #oltp_read_only
 #oltp_read_write
 #oltp_update_non_index
-  sysbench /usr/share/sysbench/oltp_read_only.lua \
+sysbench /usr/share/sysbench/oltp_read_only.lua \
   --mysql-host=$DBIP \
   --mysql-port=$DBPORT \
   --mysql-user=$DBUSER \
@@ -81,16 +81,10 @@ do
   --tables=$TBLCNT \
   --table-size=$ROWS \
   --report-interval=$REPORT_INTERVAL \
-  --threads=${thread}
-  --rand-init=on \
-  --max-requests=0 \
-  --percentile=99 \
-  --time=$DURING run >> ./${rounddir}/sysbench_${thread}.log
+  --threads=${thread} \
+  --rand-type=uniform \
+  --time=$DURING run >> ${rounddir}/sysbench_${thread}.log
 
-./bin/sysbench ./tests/include/oltp_legacy/oltp.lua --db-driver=mysql --mysql-host=${DBIP} --mysql-port=${DBPORT} \
---mysql-user=${DBUSER} --mysql-password=${DBPASSWD} --mysql-db=${DBNAME} --oltp_tables_count=${TBLCNT} \
---oltp-table-size=${ROWS} --rand-init=on --threads=${thread} --oltp-read-only=off --report-interval=1 \
---rand-type=uniform --max-time=${DURING} --max-requests=0 --percentile=99 run >> ./${rounddir}/sbtest_${thread}.log
 
 sleep 300
 done
