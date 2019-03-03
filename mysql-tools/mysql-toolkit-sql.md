@@ -35,7 +35,7 @@ select c.table_schema as `db`, c.table_name as `tbl`,
 
 * ## 查看未完成的事务列表
 > 优化建议：若有长时间未完成的事务，可能会导致：
-> - undo不能被及时purge，undu表空间不断增长；
+> - undo不能被及时purge，undo表空间不断增长；
 > - 持有行锁，其他事务被阻塞。
 > 应该及时提交或回滚这些事务，或者直接kill释放之。
 >
