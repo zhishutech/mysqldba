@@ -55,7 +55,7 @@
 
 ### 二、检查脚本
 
-git地址：https://github.com/xuclachina/mysqldba/blob/master/mysql-tools/check_mysql.py
+git地址：https://github.com/zhishutech/mysqldba/blob/master/mysql-tools/check_mysql.py
 
 ### 三、如何使用检查脚本
 
