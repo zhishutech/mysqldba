@@ -15,7 +15,7 @@
 - mysql5-rowlockwaits:查看mysql行锁等待
 
 ## 示例
-"""
+```
 [root@izbp12nspj47ypto9t6vyez mysql-tools]# dstat --innodb-checkpoint --innodb-list --mysql5-rowlockwaits
 --------------------innodb-checkpoint-lags-------------------- --innodb-list-length- -------innodb-lock-waits-------
         LSN1                 LSN4                 LAG         | unpurged     free   | current_waits    total_waits  
@@ -23,6 +23,4 @@
          1410769156           1410769147                    9 |       41          0 |              0               0
          1410769156           1410769147                    9 |       41          0 |              0               0
          1410769156           1410769147                    9 |       41          0 |              0               0
-"""
-
-
+```
