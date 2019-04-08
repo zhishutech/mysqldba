@@ -124,7 +124,7 @@ if __name__ == '__main__':
                               'Handler_read_next', 'Handler_read_rnd','Handler_read_rnd_next', 'Sort_merge_passes', 'Binlog_cache_disk_use', 
                               'Com_select', 'Com_update', 'Com_insert', 'Com_delete', 'Com_commit', 'Com_rollback']
             var_metrics = client.get_variables(variables)
-            guage_metrics = client.get_status_metric(gague_status, data_dict1, "GAGUE")
+            guage_metrics = client.get_status_metric(gague_status, data_dict1, "GAUGE")
             counter_metrics = client.get_status_metric(counter_status, data_dict1, "COUNTER")
             custom_status = client.get_custom_status(data_dict1, data_dict2)
             custom_metrics = client.get_custom_metrics(data_dict1, innodb_status_format, slave_status_format)
@@ -135,7 +135,7 @@ if __name__ == '__main__':
             payload.extend(custom_metrics)
             
     except:
-        alive_metrics = generate_metric(endpoint, "mysql_alive", ts, 60, 0, "GAGUE", tags)
+        alive_metrics = generate_metric(endpoint, "mysql_alive", ts, 60, 0, "GAUGE", tags)
         payload.append(alive_metrics)
 
     print(payload)
