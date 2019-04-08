@@ -1,7 +1,7 @@
 | metric name                    | 指标说明                                  | 取值      | 类型    |
 | ------------------------------ | ----------------------------------------- | --------- | ------- |
 | mysql_alive                    | mysql存活状态，1为存活，0为宕机           | 自定义    | GAUGE   |
-| reponsetime                    | 响应时间，单位：秒                        | 自定义    | GAUGE   |
+| responsetime                   | 响应时间，单位：秒                        | 自定义    | GAUGE   |
 | uptime                         | 存活时间，单位：秒                        | status    | GAUGE   |
 | role                           | 实例角色，1为master，0为slave             | 自定义    | GAUGE   |
 | read_only                      | 只读                                      | variables | GAUGE   |

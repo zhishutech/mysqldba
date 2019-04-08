@@ -93,26 +93,19 @@ def get_slave_metric(self, slave_status_format, ts):
     else:
         metric_name = "role"
         value = 1
-    metric = generate_metric(self.endpoint, metric_name, ts, 60, value, "GAGUE", self.tags)
+    metric = generate_metric(self.endpoint, metric_name, ts, 60, value, "GAUGE", self.tags)
     metric_list.append(metric)
 
     if slave_status_format:
         for item in ['Slave_IO_Running', 'Slave_SQL_Running', 'Seconds_Behind_Master']:
             value = map_value(slave_status_format[item])
-            metric = generate_metric(self.endpoint, item, ts, 60, value, "GAGUE", self.tags)
+            metric = generate_metric(self.endpoint, item, ts, 60, value, "GAUGE", self.tags)
             metric_list.append(metric)
     return metric_list
 
 
 def get_other_metric(self, metric_name, value, ts):
     metric_list = []
-    metric = generate_metric(self.endpoint, metric_name, ts, 60, value, "GAGUE", self.tags)
-    metric_list.append(metric)
-    return metric_list
-
-
-def get_other_metric(metric_name, value, ts):
-    metric_list = []
-    metric = generate_metric(self.endpoint, metric_name, ts, 60, value, "GAGUE", self.tags)
+    metric = generate_metric(self.endpoint, metric_name, ts, 60, value, "GAUGE", self.tags)
     metric_list.append(metric)
     return metric_list
