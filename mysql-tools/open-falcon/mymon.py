@@ -4,8 +4,9 @@
 import configparser
 import requests
 import pymysql
-import time
+import time, datetime
 import json
+import os
 
 from mymon_utils import map_value, get_var_metric, get_sta_metric, get_statusdiff_metric, get_innodb_metric, get_slave_metric, get_other_metric, generate_metric
 
@@ -44,7 +45,7 @@ class DBUtil:
         innodb_status = self._cursor.fetchall()
         innodb_status_format = str(innodb_status).split('\\n')
         return innodb_status_format
-
+        
     def get_slave_status(self):
         column_list = []
         data_dict = {}
@@ -88,8 +89,28 @@ class DBUtil:
         metrc_list.extend(othter_metric_list)
         metrc_list.extend(alive_metrics)
         return metrc_list
-    
 
+    def record_innodb_status(self, innodb_status_format):
+        status_file = self.endpoint + '_' + datetime.datetime.now().strftime('%y%m%d') + '_innodb_status'
+        innodb_status_format = innodb_status_format[1:-1]
+        f = open(status_file, "a+")
+        monitor_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        f.write(monitor_time + '\n')
+        for item in innodb_status_format:
+            f.write(item + '\n')
+        f.close()
+        
+    def record_processlist(self):
+        self._cursor.execute('select * from information_schema.processlist;')
+        processlist = self._cursor.fetchall()
+        processlist_file = self.endpoint + '_' + datetime.datetime.now().strftime('%y%m%d') + '_processlist'
+        fp = open(processlist_file, "a+")
+        monitor_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        fp.write(monitor_time + '\n')
+        for item in processlist:
+            fp.write(str(item) + '\n')
+        fp.close()    
+             
 
 if __name__ == '__main__':
 
@@ -112,6 +133,7 @@ if __name__ == '__main__':
             slave_status_format = client.get_slave_status()
             time.sleep(1)
             data_dict2 = client.get_status()
+            client.record_processlist()
 
             variables = ['read_only', 'super_read_only', 'innodb_buffer_pool_size', 'table_open_cache', 'table_definition_cache',
                          'innodb_flush_log_at_trx_commit', 'sync_binlog', 'max_connections', 'max_user_connections']
@@ -133,11 +155,11 @@ if __name__ == '__main__':
             payload.extend(counter_metrics)
             payload.extend(custom_status)
             payload.extend(custom_metrics)
+            client.record_innodb_status(innodb_status_format)
             
     except:
         alive_metrics = generate_metric(endpoint, "mysql_alive", ts, 60, 0, "GAUGE", tags)
         payload.append(alive_metrics)
 
-    print(payload)
-    #r = requests.post("http://127.0.0.1:1988/v1/push", data=json.dumps())
-    # print(r.text)
+    r = requests.post("http://127.0.0.1:1988/v1/push", data=json.dumps())
+    print(r.text)

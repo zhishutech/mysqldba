@@ -1,0 +1,4 @@
+2019-04-09 19:59:19
+2019-04-09 19:59:49
+(7315, 'xucl', '112.10.240.98:3666', 'information_schema', 'Query', 0, 'executing', 'select * from information_schema.processlist')
+(7197, 'monitor', '127.0.0.1:60556', None, 'Sleep', 0, '', None)
