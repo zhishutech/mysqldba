@@ -8,6 +8,7 @@ import sys
 import os
 import datetime
 import subprocess
+import psutil
 from collections import Counter
 
 class FuncThread(threading.Thread):
@@ -369,6 +370,8 @@ def system_vmstat(filedir):
 
 
 def check_conditions(check_dict, condition_dict):
+    print(check_dict)
+    print(condition_dict)
     result = dict(Counter(check_dict) - Counter(condition_dict))
     return result
 
@@ -389,6 +392,13 @@ def get_origin_status(status_dict, origin_status_list):
     return origin_status_dict
 
 
+def get_origin_sys_status(status_dict, origin_status_list):
+    origin_status_dict = {}
+    for item in origin_status_list:
+        origin_status_dict[item] = float(status_dict[item])
+    return origin_status_dict
+
+
 def get_diff_status(status_dict1, status_dict2, diff_status_list):
     diff_status_dict = {}
     for item in diff_status_list:
@@ -396,9 +406,46 @@ def get_diff_status(status_dict1, status_dict2, diff_status_list):
     return diff_status_dict
 
 
-def get_system_status(dbaction):
-    return {}
+def get_sys_diff_status(status_dict1, status_dict2, diff_status_list):
+    diff_status_dict = {}
+    for item in diff_status_list:
+        diff_status_dict[item] = float(status_dict2[item]) - float(status_dict1[item])
+    return diff_status_dict
+
+def get_sys_status():
+    sys_status_dict = {}
+    sys_status_dict['cpu_user'] = psutil.cpu_times_percent().user
+    sys_status_dict['cpu_sys'] = psutil.cpu_times_percent().system
+    sys_status_dict['cpu_iowait'] = psutil.cpu_times_percent().iowait
+    sys_status_dict['sys_iops'] = psutil.disk_io_counters().read_count + psutil.disk_io_counters().write_count
+    return sys_status_dict
 
 
 def get_slave_status(dbaction):
-    return {}
+    slave_status_dict = {}
+    sql = 'show slave status'
+    status_obj, desc = dbaction.data_inquiry(sql)
+    if status_obj:
+        if not status_obj[0][32]:
+            sql_delay = 99999
+        else:
+            sql_delay = status_obj[0][32]
+        slave_status_dict['sql_delay'] = sql_delay
+    else:
+        slave_status_dict['sql_delay'] = 0
+    return slave_status_dict
+
+
+def get_log_dir(dbaction):
+    sql = 'show global variables'
+    slow_log = ''
+    error_log = ''
+    var_obj, desc = dbaction.data_inquiry(sql)
+    for item in var_obj:
+        if item[0] == 'slow_query_log_file':
+            slow_log = item[1]
+        elif item[0] == 'log_error':
+            error_log = item[1]
+        else:
+            continue
+    return slow_log,error_log
