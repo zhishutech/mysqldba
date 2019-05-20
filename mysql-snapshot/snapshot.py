@@ -30,15 +30,28 @@ class Snapshot(object):
         dbaction = DBAction(conn_setting)
         while True:
             status_dict1 = get_mysql_status(dbaction)
+            sys_dict1 = get_sys_status()
+            slow_log,error_log = get_log_dir(dbaction)
+            slave_status_dict = get_slave_status(dbaction)
+
             time.sleep(1)
+
             status_dict2 = get_mysql_status(dbaction)
+            sys_dict2 = get_sys_status()
+
             origin_status_list = ['Threads_connected', 'Threads_running', 'Innodb_row_lock_current_waits']
+            origin_sys_status_list= ['cpu_user', 'cpu_sys', 'cpu_iowait']
             diff_status_list = ['Slow_queries']
+            diff_sys_status = ['sys_iops']
 
             origin_status_dict = get_origin_status(status_dict1, origin_status_list)
+            origin_status_sys_dict = get_origin_sys_status(sys_dict1, origin_sys_status_list)
             diff_status_dict = get_diff_status(status_dict1, status_dict2, diff_status_list)
+            diff_sys_status = get_sys_diff_status(sys_dict1, sys_dict2, diff_sys_status)
 
-            check_dict = dict(origin_status_dict, **diff_status_dict)
+            check_dict = dict(origin_status_dict, **diff_status_dict, **origin_status_sys_dict, **diff_sys_status,
+                              **slave_status_dict)
+
             collect_flag = check_conditions(check_dict, condition_dict)
 
             time_now = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
@@ -51,8 +64,8 @@ class Snapshot(object):
                 do_in_thread(mysql_processlist, dbaction, filedir)
                 do_in_thread(mysql_transactions, dbaction, filedir)
                 do_in_thread(mysql_lock_info, dbaction, filedir)
-                do_in_thread(mysql_error_log, '/storage/single/mysql3306/data/error.log', filedir)
-                do_in_thread(mysql_slow_log, '/storage/single/mysql3306/data/slow.log', filedir)
+                do_in_thread(mysql_error_log, slow_log, filedir)
+                do_in_thread(mysql_slow_log, error_log, filedir)
                 do_in_thread(system_message, '/var/log/messages', filedir)
                 do_in_thread(system_dmesg, '/var/log/dmesg', filedir)
                 do_in_thread(system_top, filedir)

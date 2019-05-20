@@ -14,7 +14,7 @@ pip install -r requirements.txt
 示例
 
 ```python
-python /tmp/snapshot/snapshot.py --host=127.0.0.1 --port=3306 --user=xucl --password=xuclxucl --conditions="{'Threads_connected': 1, 'Threads_running': 1, 'Innodb_row_lock_current_waits': 1, 'Slow_queries': 1}" --storedir=/tmp
+python /tmp/snapshot/snapshot.py --host=127.0.0.1 --port=3306 --user=xucl --password=xuclxucl --conditions="{'Threads_connected': 500, 'Threads_running': 20, 'Innodb_row_lock_current_waits': 5, 'Slow_queries': 5, 'cpu_user':10, 'cpu_sys':10, 'cpu_iowait':5, 'sys_iops':500, 'sql_delay':60}" --storedir=/tmp
 ```
 
 
