@@ -2,10 +2,10 @@
 
 > - 作者：叶金荣, 知数堂培训（http:/zhishutang.com）联合创始人, 资深MySQL专家, MySQL布道师, Oracle MySQL ACE
 > - 分享工作、教学中用到的&收集到的一些实用SQL脚本命令，有需自取
-> - 这些脚本在MySQL 5.7版本下均测试通过
-> - 最后更新时间：2017-6-22
+> - 这些脚本在MySQL 5.7/8.0版本下均测试通过
+> - 最后更新时间：2019-7-7
 > - QQ群：579036588
-> - 微信公众号：「老叶茶馆」、「知数堂」、「云DB」
+> - 微信公众号：「老叶茶馆」、「知数堂」、「pai3306」
 
 * ## 查看哪些索引采用部分索引（前缀索引）
 > 优化建议：检查部分索引长度是否还可以进一步缩小
@@ -150,4 +150,87 @@ select table_name, count(*), sum(NUMBER_RECORDS),
  if(IS_OLD='YES', 'old', 'new') as old_block from
  information_schema.innodb_buffer_page where 
  table_name = '`yejr`.`t1`' group by old_block;
+```
+
+* ## 查看某个数据库里所有表的索引统计情况，重点是关注 stat_pct 列值较低的索引
+```
+# 工作方式
+# 1、扫描所有索引统计信息
+# 2、包含主键列的辅助索引统计值，对比主键索引列的统计值，得到一个百分比stat_pct
+# 3、根据stat_pct排序，值越低说明辅助索引统计信息越不精确，越是需要关注
+
+set @statdb = 'yejr';
+select 
+a.database_name ,
+a.table_name ,
+a.index_name ,
+a.stat_value SK,
+b.stat_value PK, 
+round((a.stat_value/b.stat_value)*100,2) stat_pct
+from 
+(
+select 
+b.database_name  ,
+b.table_name  ,
+b.index_name ,  
+b.stat_value
+from 
+(
+select database_name  ,
+table_name  ,
+index_name ,  
+max(stat_name) stat_name 
+from innodb_index_stats 
+where   database_name = @statdb
+and stat_name not in ( 'size' ,'n_leaf_pages' )
+group by 
+database_name  ,
+table_name  ,
+index_name   
+) a join innodb_index_stats b on a.database_name=b.database_name
+and a.table_name=b.table_name
+and a.index_name=b.index_name
+and a.stat_name=b.stat_name 
+and b.index_name !='PRIMARY'
+) a left join 
+(
+select 
+b.database_name  ,
+b.table_name  ,
+b.index_name ,  
+b.stat_value
+from 
+(
+select database_name  ,
+table_name  ,
+index_name ,  
+max(stat_name) stat_name 
+from innodb_index_stats 
+where   database_name = @statdb
+and stat_name not in ( 'size' ,'n_leaf_pages' )
+group by 
+database_name  ,
+table_name  ,
+index_name   
+) a join innodb_index_stats b 
+on a.database_name=b.database_name
+and a.table_name=b.table_name
+and a.index_name=b.index_name
+and a.stat_name=b.stat_name
+and b.index_name ='PRIMARY'
+) b 
+on a.database_name=b.database_name
+and a.table_name=b.table_name
+where b.stat_value is not null 
+and  a.stat_value >0
+order by stat_pct;
+
++---------------+-------------------+--------------+--------+--------+----------+
+| database_name | table_name        | index_name   | SK     | PK     | stat_pct |
++---------------+-------------------+--------------+--------+--------+----------+
+| zhishutang    | t_json_vs_vchar   | c1vc         |  37326 |  39825 |    93.73 |
+| zhishutang    | t_json_vs_vchar   | c2vc         |  37371 |  39825 |    93.84 |
+| zhishutang    | t1                | name         | 299815 | 299842 |    99.99 |
+| zhishutang    | t4                | c2           |      2 |      2 |   100.00 |
++---------------+-------------------+--------------+--------+--------+----------+
 ```
