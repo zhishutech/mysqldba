@@ -41,7 +41,7 @@ class Snapshot(object):
 
             origin_status_list = ['Threads_connected', 'Threads_running', 'Innodb_row_lock_current_waits']
             origin_sys_status_list= ['cpu_user', 'cpu_sys', 'cpu_iowait']
-            diff_status_list = ['Slow_queries']
+            diff_status_list = ['Slow_queries', 'Innodb_buffer_pool_wait_free']
             diff_sys_status = ['sys_iops']
 
             origin_status_dict = get_origin_status(status_dict1, origin_status_list)

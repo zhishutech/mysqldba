@@ -437,9 +437,7 @@ def get_slave_status(dbaction):
 
 
 def get_log_dir(dbaction):
-    sql = 'show global variables'
-    slow_log = ''
-    error_log = ''
+    sql = """select * from performance_schema.global_variables where VARIABLE_NAME in ('log_error', 'slow_query_log_file', 'datadir');"""
     var_obj, desc = dbaction.data_inquiry(sql)
     for item in var_obj:
         if item[0] == 'slow_query_log_file':
@@ -447,5 +445,8 @@ def get_log_dir(dbaction):
         elif item[0] == 'log_error':
             error_log = item[1]
         else:
-            continue
+            data_dir = item[1]
+
+    slow_log = data_dir + slow_log
+    error_log = data_dir + error_log.split('/')[1]
     return slow_log,error_log
