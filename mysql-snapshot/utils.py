@@ -1,4 +1,4 @@
-# coding:gbk
+# coding:utf-8
 
 import time
 import threading
@@ -7,9 +7,19 @@ import argparse
 import sys
 import os
 import datetime
+import traceback
 import subprocess
 import psutil
+import logging
 from collections import Counter
+
+# logging配置
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(filename)s %(levelname)s %(message)s',
+                    datefmt='%a,%d %b %Y %H:%M:%S',
+                    filename='/tmp/temp.log',
+                    filemode='a')
+
 
 class FuncThread(threading.Thread):
 
@@ -112,39 +122,66 @@ def dt2str(data):
 
 def mysql_variables(dbaction, filedir):
     filename = filedir + '/' + 'variables'
-    sql = 'show global variables'
-    var_obj, desc = dbaction.data_inquiry(sql)
-    with open(filename, 'w') as f:
-        for item in var_obj:
-            var_string = item[0] + ':' + item[1] + '\n'
-            f.write(var_string)
+    sql = 'select * from performance_schema.global_variables;'
+    try:
+        logging.info('开始记录MySQL variables')
+        var_obj, desc = dbaction.data_inquiry(sql)
+    except:
+        error_msg = str(traceback.format_exc())
+        logging.info('连接池获取连接出错:%s' % error_msg)
+        var_obj = ()
+    if var_obj:
+        with open(filename, 'w') as f:
+            for item in var_obj:
+                var_string = item[0] + ':' + item[1] + '\n'
+                f.write(var_string)
 
 
 def mysql_status(dbaction, filedir):
     filename = filedir + '/' + 'status'
     sql = 'show global status'
-    status_obj, desc = dbaction.data_inquiry(sql)
-    with open(filename, 'w') as f:
-        for item in status_obj:
-            status_string = item[0] + ':' + item[1] + '\n'
-            f.write(status_string)
+    try:
+        logging.info('开始记录MySQL status')
+        status_obj, desc = dbaction.data_inquiry(sql)
+    except:
+        error_msg = str(traceback.format_exc())
+        logging.info('连接池获取连接出错:%s' % error_msg)
+        status_obj = ()
+    if status_obj:
+        with open(filename, 'w') as f:
+            for item in status_obj:
+                status_string = item[0] + ':' + item[1] + '\n'
+                f.write(status_string)
 
 
 def mysql_innodb_status(dbaction, filedir):
     filename = filedir + '/' + 'innodb_status'
     sql = 'show engine innodb status'
-    status_obj, desc = dbaction.data_inquiry(sql)
-    status_list = str(status_obj[0]).split('\\n')[1:-1]
-    with open(filename, 'w') as f:
-        for item in status_list:
-            status_string = item + '\n'
-            f.write(status_string)
+    try:
+        logging.info('开始记录innodb status')
+        status_obj, desc = dbaction.data_inquiry(sql)
+    except:
+        error_msg = str(traceback.format_exc())
+        logging.info('连接池获取连接出错:%s' % error_msg)
+        status_obj = ()
+    if status_obj:
+        status_list = str(status_obj[0]).split('\\n')[1:-1]
+        with open(filename, 'w') as f:
+            for item in status_list:
+                status_string = item + '\n'
+                f.write(status_string)
 
 
 def mysql_slave_status(dbaction, filedir):
     filename = filedir + '/' + 'slave_status'
     sql = 'show slave status'
-    status_obj, desc = dbaction.data_inquiry(sql)
+    try:
+        logging.info('开始记录slave status')
+        status_obj, desc = dbaction.data_inquiry(sql)
+    except:
+        error_msg = str(traceback.format_exc())
+        logging.info('连接池获取连接出错:%s' % error_msg)
+        status_obj = ()
     desc_list = []
     if status_obj:
         with open(filename, 'w') as f:
@@ -158,22 +195,36 @@ def mysql_slave_status(dbaction, filedir):
 def mysql_processlist(dbaction, filedir):
     filename = filedir + '/' + 'processlist'
     sql = 'show full processlist'
-    processlist_obj, desc = dbaction.data_inquiry(sql)
-    with open(filename, 'w') as f:
-        for item in desc:
-            desc_string = item[0] + '    '
-            f.write(desc_string)
-        f.write('\n')
-        for item in processlist_obj:
-            processlist_string = map(lambda x: str(x) + '     ', item)
-            f.write(''.join(processlist_string) + '\n')
+    try:
+        logging.info('开始记录processlist')
+        processlist_obj, desc = dbaction.data_inquiry(sql)
+    except:
+        error_msg = str(traceback.format_exc())
+        logging.info('连接池获取连接出错:%s' % error_msg)
+        processlist_obj = ()
+    if processlist_obj:
+        with open(filename, 'w') as f:
+            for item in desc:
+                desc_string = item[0] + '    '
+                f.write(desc_string)
+                f.write('\n')
+            for item in processlist_obj:
+                processlist_string = map(lambda x: str(x) + '     ', item)
+                f.write(''.join(processlist_string) + '\n')
 
 
 def mysql_transactions(dbaction, filedir):
     filename = filedir + '/' + 'transactions'
     desc_list = []
     sql = 'select * from information_schema.innodb_trx'
-    trans_obj, desc = dbaction.data_inquiry(sql)
+    try:
+        logging.info('开始记录transactions')
+        trans_obj, desc = dbaction.data_inquiry(sql)
+    except:
+        error_msg = str(traceback.format_exc())
+        logging.info('连接池获取连接出错:%s' % error_msg)
+        trans_obj = ()
+
     if trans_obj:
         with open(filename, 'w') as f:
             for item in desc:
@@ -190,7 +241,13 @@ def mysql_lock_info(dbaction, filedir):
     filename = filedir + '/' + 'innodb_locks'
     desc_list = []
     sql = 'select * from sys.innodb_lock_waits'
-    lock_obj, desc = dbaction.data_inquiry(sql)
+    try:
+        logging.info('开始记录innodb locks')
+        lock_obj, desc = dbaction.data_inquiry(sql)
+    except:
+        error_msg = str(traceback.format_exc())
+        logging.info('连接池获取连接出错:%s' % error_msg)
+        lock_obj = ()
     if lock_obj:
         with open(filename, 'w') as f:
             for item in desc:
@@ -206,7 +263,7 @@ def mysql_lock_info(dbaction, filedir):
 def mysql_error_log(errorlog, filedir):
     error_file = '/%s/errorlog' % filedir
     start_pos = os.path.getsize(errorlog)
-    time.sleep(10)
+    time.sleep(5)
     stop_pos = os.path.getsize(errorlog)
     offset_size = int(stop_pos) - int(start_pos)
     if offset_size:
@@ -225,7 +282,7 @@ def mysql_error_log(errorlog, filedir):
 def mysql_slow_log(slowlog, filedir):
     slow_file = '/%s/slowlog' % filedir
     start_pos = os.path.getsize(slowlog)
-    time.sleep(10)
+    time.sleep(5)
     stop_pos = os.path.getsize(slowlog)
     offset_size = int(stop_pos) - int(start_pos)
     if offset_size:
@@ -242,15 +299,17 @@ def mysql_slow_log(slowlog, filedir):
 
 
 def system_disk_space(filedir):
+    logging.info('开始记录磁盘空间')
     cmd = 'df -k >> /%s/disk-space' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     pro.terminate()
 
 
 def system_message(message, filedir):
+    logging.info('开始记录message')
     message_file = '/%s/message' % filedir
     start_pos = os.path.getsize(message)
-    time.sleep(10)
+    time.sleep(5)
     stop_pos = os.path.getsize(message)
     offset_size = int(stop_pos) - int(start_pos)
     if offset_size:
@@ -267,9 +326,10 @@ def system_message(message, filedir):
 
 
 def system_dmesg(dmesg, filedir):
+    logging.info('开始记录dmesg')
     dmesg_file = '/%s/dmesg' % filedir
     start_pos = os.path.getsize(dmesg)
-    time.sleep(10)
+    time.sleep(5)
     stop_pos = os.path.getsize(dmesg)
     offset_size = int(stop_pos) - int(start_pos)
     if offset_size:
@@ -286,92 +346,100 @@ def system_dmesg(dmesg, filedir):
 
 
 def system_top(filedir):
+    logging.info('开始记录top输出')
     cmd = 'top -bn5 >> /%s/top' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if pro.poll() != None:
         ErrCode = "error"
     else:
         ErrCode = "success"
-        time.sleep(10)
+        time.sleep(5)
     pro.terminate()
     print(ErrCode)
 
 
 def system_iostat(filedir):
+    logging.info('开始记录iostat信息')
     cmd = 'iostat -m -x 1 >> /%s/iostat' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if pro.poll() != None:
         ErrCode = "error"
     else:
         ErrCode = "success"
-        time.sleep(10)
+        time.sleep(5)
     pro.terminate()
     print(ErrCode)
 
 
 def system_mpstat(filedir):
+    logging.info('开始记录mpstat信息')
     cmd = 'mpstat -I SUM -P ALL 1 >> /%s/mpstat' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if pro.poll() != None:
         ErrCode = "error"
     else:
         ErrCode = "success"
-        time.sleep(10)
+        time.sleep(5)
     pro.terminate()
     print(ErrCode)
 
 
 def system_tcpdump(filedir):
+    logging.info('开始记录tcpdump信息')
     cmd = 'tcpdump -i any -s 4096 -w /%s/tcpdump port 3306' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if pro.poll() != None:
         ErrCode = "error"
     else:
         ErrCode = "success"
-        time.sleep(10)
+        time.sleep(5)
     pro.terminate()
     print(ErrCode)
 
 
 def system_mem_info(filedir):
+    logging.info('开始记录内存信息')
     cmd = 'cat /proc/meminfo >> %s/meminfo' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     pro.terminate()
 
 
 def system_interrupts(filedir):
+    logging.info('开始记录中断信息')
     cmd = 'cat /proc/interrupts >> %s/interrupts' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     pro.terminate()
 
 
 def system_ps(filedir):
+    logging.info('开始记录ps信息')
     cmd = 'ps -eaF >> %s/ps' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     pro.terminate()
 
 
 def system_netstat(filedir):
+    logging.info('开始记录netstat信息')
     cmd = 'netstat -antp >> %s/netstat' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     pro.terminate()
 
 
 def system_vmstat(filedir):
+    logging.info('开始记录vmstat信息')
     cmd = 'vmstat 1 >> %s/vmstat' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if pro.poll() != None:
         ErrCode = "error"
     else:
         ErrCode = "success"
-        time.sleep(10)
+        time.sleep(5)
     print(ErrCode)
     pro.terminate()
 
 
 def check_conditions(check_dict, condition_dict):
-    print(check_dict)
-    print(condition_dict)
+    logging.info('开始检查触发条件')
     result = dict(Counter(check_dict) - Counter(condition_dict))
     return result
 
@@ -379,10 +447,20 @@ def check_conditions(check_dict, condition_dict):
 def get_mysql_status(dbaction):
     status_dict = {}
     sql = 'show global status;'
-    status_obj, desc = dbaction.data_inquiry(sql)
-    for item in status_obj:
-        status_dict[item[0]] = item[1]
-    return status_dict
+    try:
+        logging.info('开始获取mysql status')
+        status_obj, desc = dbaction.data_inquiry(sql)
+    except:
+        error_msg = str(traceback.format_exc())
+        logging.info('连接池获取连接出错:%s' % error_msg)
+        status_obj = ()
+
+    if status_obj:
+        for item in status_obj:
+            status_dict[item[0]] = item[1]
+        return status_dict
+    else:
+        return {}
 
 
 def get_origin_status(status_dict, origin_status_list):
@@ -412,7 +490,9 @@ def get_sys_diff_status(status_dict1, status_dict2, diff_status_list):
         diff_status_dict[item] = float(status_dict2[item]) - float(status_dict1[item])
     return diff_status_dict
 
+
 def get_sys_status():
+    logging.info('开始获取系统状态')
     sys_status_dict = {}
     sys_status_dict['cpu_user'] = psutil.cpu_times_percent().user
     sys_status_dict['cpu_sys'] = psutil.cpu_times_percent().system
@@ -424,7 +504,12 @@ def get_sys_status():
 def get_slave_status(dbaction):
     slave_status_dict = {}
     sql = 'show slave status'
-    status_obj, desc = dbaction.data_inquiry(sql)
+    try:
+        logging.info('开始获取slave status')
+        status_obj, desc = dbaction.data_inquiry(sql)
+    except:
+        error_msg = str(traceback.format_exc())
+        logging.info('连接池获取连接出错:%s' % error_msg)
     if status_obj:
         if not status_obj[0][32]:
             sql_delay = 99999
@@ -437,15 +522,22 @@ def get_slave_status(dbaction):
 
 
 def get_log_dir(dbaction):
-    sql = 'show global variables'
-    slow_log = ''
-    error_log = ''
-    var_obj, desc = dbaction.data_inquiry(sql)
+    sql = """select * from performance_schema.global_variables where VARIABLE_NAME in ('log_error', 'slow_query_log_file', 'datadir');"""
+    try:
+        logging.info('开始获取log位置')
+        var_obj, desc = dbaction.data_inquiry(sql)
+    except:
+        error_msg = str(traceback.format_exc())
+        logging.info('连接池获取连接出错:%s' % error_msg)
+
     for item in var_obj:
         if item[0] == 'slow_query_log_file':
             slow_log = item[1]
         elif item[0] == 'log_error':
             error_log = item[1]
         else:
-            continue
-    return slow_log,error_log
+            data_dir = item[1]
+
+    slow_log = data_dir + slow_log
+    error_log = data_dir + error_log.split('/')[1]
+    return slow_log, error_log
