@@ -5,6 +5,7 @@ import logging
 import traceback
 import pymysql
 import warnings
+from retry import retry
 warnings.filterwarnings("ignore")
 
 from DBUtils.PooledDB import PooledDB
@@ -18,10 +19,9 @@ class DBPool:
         self.host = port
         self.host = user
         self.host = password
-        self.pool = PooledDB(creator=pymysql, mincached=1, maxcached=10, maxconnections=100, 
+        self.pool = PooledDB(creator=pymysql, mincached=30, maxcached=50, maxconnections=200, maxusage=0,
                              blocking=True, host=host, port=int(port), user=user, passwd=password,
-                             db="information_schema", charset='utf8')
-
+                             db="information_schema", charset='utf8')      
     def get_connection(self):
         return self.pool.connection()
 
@@ -33,7 +33,7 @@ class DBAction:
         user = conn_setting['user']
         password = conn_setting['password']
         global db_pool_ins
-        if db_pool_ins == None:
+        if db_pool_ins is None:
             db_pool_ins = DBPool(host, port, user, password)
         self.conn = db_pool_ins.get_connection()
         self.cursor = self.conn.cursor()
@@ -64,6 +64,7 @@ class DBAction:
         self.conn.commit()
         return count
 
+    @retry(delay=1)
     def data_inquiry(self, sql, params=()):
         """
         SELECT 操作
@@ -78,5 +79,3 @@ class DBAction:
 
     def rollback(self):
         self.conn.rollback()
-
-
