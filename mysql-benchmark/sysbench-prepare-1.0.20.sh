@@ -48,6 +48,6 @@ echo 'now prepare data'
  --mysql-password=$DBPASSWD \
  --mysql-db=$DBNAME \
  --db-driver=mysql \
- --oltp_tables_count=10 \
+ --oltp_tables_count=$TBLCNT \
  --oltp_table_size=$ROWS \
  --time=$DURING prepare
