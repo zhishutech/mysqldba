@@ -13,11 +13,16 @@ import psutil
 import logging
 from collections import Counter
 
+# 日志文件
+logfile="/tmp/mysql-snapshot.log"
+# vmstat/iostat/mpstat run time 5s
+stats_log_sec=5
+
 # logging配置
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s %(levelname)s %(message)s',
                     datefmt='%a,%d %b %Y %H:%M:%S',
-                    filename='/tmp/temp.log',
+                    filename=logfile,
                     filemode='a')
 
 
@@ -261,7 +266,7 @@ def mysql_lock_info(dbaction, filedir):
 
 
 def mysql_error_log(errorlog, filedir):
-    error_file = '/%s/errorlog' % filedir
+    error_file = '%s/errorlog' % filedir
     start_pos = os.path.getsize(errorlog)
     time.sleep(5)
     stop_pos = os.path.getsize(errorlog)
@@ -280,7 +285,7 @@ def mysql_error_log(errorlog, filedir):
 
 
 def mysql_slow_log(slowlog, filedir):
-    slow_file = '/%s/slowlog' % filedir
+    slow_file = '%s/slowlog' % filedir
     start_pos = os.path.getsize(slowlog)
     time.sleep(5)
     stop_pos = os.path.getsize(slowlog)
@@ -300,14 +305,14 @@ def mysql_slow_log(slowlog, filedir):
 
 def system_disk_space(filedir):
     logging.info('开始记录磁盘空间')
-    cmd = 'df -k >> /%s/disk-space' % filedir
+    cmd = 'df -k >> %s/disk-space' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     pro.terminate()
 
 
 def system_message(message, filedir):
     logging.info('开始记录message')
-    message_file = '/%s/message' % filedir
+    message_file = '%s/message' % filedir
     start_pos = os.path.getsize(message)
     time.sleep(5)
     stop_pos = os.path.getsize(message)
@@ -327,7 +332,7 @@ def system_message(message, filedir):
 
 def system_dmesg(dmesg, filedir):
     logging.info('开始记录dmesg')
-    dmesg_file = '/%s/dmesg' % filedir
+    dmesg_file = '%s/dmesg' % filedir
     start_pos = os.path.getsize(dmesg)
     time.sleep(5)
     stop_pos = os.path.getsize(dmesg)
@@ -347,54 +352,58 @@ def system_dmesg(dmesg, filedir):
 
 def system_top(filedir):
     logging.info('开始记录top输出')
-    cmd = 'top -bn5 >> /%s/top' % filedir
+    cmd = 'top -bn5 | head -n 15 >> %s/top' % filedir
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if pro.poll() != None:
-        ErrCode = "error"
+        ErrCode = "top error"
+        print(ErrCode)
     else:
-        ErrCode = "success"
+        ErrCode = "top success"
         time.sleep(5)
     pro.terminate()
-    print(ErrCode)
 
 
 def system_iostat(filedir):
+    global stats_log_sec
     logging.info('开始记录iostat信息')
-    cmd = 'iostat -m -x 1 >> /%s/iostat' % filedir
+    cmd = 'iostat -m -x 1 %s >> %s/iostat' % (stats_log_sec, filedir)
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if pro.poll() != None:
-        ErrCode = "error"
+        ErrCode = "iostat error"
+        print(ErrCode)
     else:
-        ErrCode = "success"
+        ErrCode = "iostat success"
         time.sleep(5)
+
     pro.terminate()
-    print(ErrCode)
 
 
 def system_mpstat(filedir):
+    global stats_log_sec
     logging.info('开始记录mpstat信息')
-    cmd = 'mpstat -I SUM -P ALL 1 >> /%s/mpstat' % filedir
+    cmd = 'mpstat -I SUM -P ALL 1 %s >> %s/mpstat' % (stats_log_sec, filedir)
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if pro.poll() != None:
-        ErrCode = "error"
+        ErrCode = "mpstat error"
+        print(ErrCode)
     else:
-        ErrCode = "success"
+        ErrCode = "mpstat success"
         time.sleep(5)
+
     pro.terminate()
-    print(ErrCode)
 
 
-def system_tcpdump(filedir):
+def system_tcpdump(mysqld_port, filedir):
     logging.info('开始记录tcpdump信息')
-    cmd = 'tcpdump -i any -s 4096 -w /%s/tcpdump port 3306' % filedir
+    cmd = 'tcpdump -i any -s 4096 -c 200 -w %s/tcpdump port %s' % (filedir, mysqld_port)
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if pro.poll() != None:
-        ErrCode = "error"
+        ErrCode = "tcpdump error"
+        print(ErrCode)
     else:
-        ErrCode = "success"
+        ErrCode = "tcpdump success"
         time.sleep(5)
     pro.terminate()
-    print(ErrCode)
 
 
 def system_mem_info(filedir):
@@ -426,21 +435,24 @@ def system_netstat(filedir):
 
 
 def system_vmstat(filedir):
+    global stats_log_sec
     logging.info('开始记录vmstat信息')
-    cmd = 'vmstat 1 >> %s/vmstat' % filedir
+    cmd = 'vmstat 1 %s >> %s/vmstat' % (stats_log_sec, filedir)
     pro = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if pro.poll() != None:
-        ErrCode = "error"
+        ErrCode = "vmstat error"
+        print(ErrCode)
     else:
-        ErrCode = "success"
+        ErrCode = "vmstat success"
         time.sleep(5)
-    print(ErrCode)
     pro.terminate()
 
 
 def check_conditions(check_dict, condition_dict):
     logging.info('开始检查触发条件')
     result = dict(Counter(check_dict) - Counter(condition_dict))
+    print("condition: %s" % ([{item:check_dict[item]} for item in result.keys()]))
+    logging.info('触发条件: %s' % ([{item:check_dict[item]} for item in result.keys()]))
     return result
 
 
@@ -494,10 +506,18 @@ def get_sys_diff_status(status_dict1, status_dict2, diff_status_list):
 def get_sys_status():
     logging.info('开始获取系统状态')
     sys_status_dict = {}
-    sys_status_dict['cpu_user'] = psutil.cpu_times_percent().user
-    sys_status_dict['cpu_sys'] = psutil.cpu_times_percent().system
-    sys_status_dict['cpu_iowait'] = psutil.cpu_times_percent().iowait
-    sys_status_dict['sys_iops'] = psutil.disk_io_counters().read_count + psutil.disk_io_counters().write_count
+    sys_status_dict['loadavg'] = psutil.getloadavg()[0]
+    sys_status_dict['cpu_user'] = psutil.cpu_times_percent(interval=0.1,percpu=False).user
+    sys_status_dict['cpu_sys'] = psutil.cpu_times_percent(interval=0.1,percpu=False).system
+    sys_status_dict['cpu_iowait'] = psutil.cpu_times_percent(interval=0.1,percpu=False).iowait
+
+    diskio1 = psutil.disk_io_counters(perdisk=False)
+    time.sleep(1)
+    diskio2 = psutil.disk_io_counters(perdisk=False)
+    rio1, wio1 = diskio1.read_count, diskio1.write_count
+    rio2, wio2 = diskio2.read_count, diskio2.write_count
+    sys_status_dict['sys_iops'] = (rio2 - rio1) + (wio2 - wio1)
+
     return sys_status_dict
 
 
@@ -512,12 +532,14 @@ def get_slave_status(dbaction):
         logging.info('连接池获取连接出错:%s' % error_msg)
     if status_obj:
         if not status_obj[0][32]:
-            sql_delay = 99999
+            #set default value = 0
+            sql_delay = 0
         else:
             sql_delay = status_obj[0][32]
         slave_status_dict['sql_delay'] = sql_delay
     else:
         slave_status_dict['sql_delay'] = 0
+
     return slave_status_dict
 
 
